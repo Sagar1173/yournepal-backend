@@ -1,0 +1,159 @@
+[
+  {
+    "id": "birthday_1",
+    "category": "birthday",
+    "background": "/static/templates/birthday/bg1.png",
+    "elements": [
+      {
+        "type": "image",
+        "placeholder": "photo",
+        "x": 200,
+        "y": 150,
+        "width": 300,
+        "height": 300
+      },
+      {
+        "type": "text",
+        "value": "Happy Birthday",
+        "fontSize": 48,
+        "x": 200,
+        "y": 80
+      },
+      {
+        "type": "text",
+        "placeholder": "name",
+        "fontSize": 36,
+        "x": 200,
+        "y": 450
+      }
+    ]
+  },
+  {
+    "id": "birthday_2",
+    "category": "birthday",
+    "background": "/static/templates/birthday/bg2.png",
+    "elements": [
+      {
+        "type": "image",
+        "placeholder": "photo",
+        "x": 100,
+        "y": 100,
+        "width": 250,
+        "height": 250
+      },
+      {
+        "type": "text",
+        "value": "Celebrate!",
+        "fontSize": 40,
+        "x": 100,
+        "y": 50
+      },
+      {
+        "type": "text",
+        "placeholder": "name",
+        "fontSize": 30,
+        "x": 100,
+        "y": 370
+      }
+    ]
+  },
+  {
+    "id": "memorial_1",
+    "category": "memorial",
+    "background": "/static/templates/memorial/bg1.png",
+    "elements": [
+      {
+        "type": "image",
+        "placeholder": "photo",
+        "x": 150,
+        "y": 100,
+        "width": 200,
+        "height": 250
+      },
+      {
+        "type": "text",
+        "value": "In Loving Memory",
+        "fontSize": 36,
+        "x": 150,
+        "y": 50
+      },
+      {
+        "type": "text",
+        "placeholder": "name",
+        "fontSize": 28,
+        "x": 150,
+        "y": 370
+      }
+    ]
+  },
+  {
+    "id": "quotes_1",
+    "category": "quotes",
+    "background": "/static/templates/quotes/bg1.png",
+    "elements": [
+      {
+        "type": "text",
+        "placeholder": "quote",
+        "fontSize": 32,
+        "x": 100,
+        "y": 200
+      },
+      {
+        "type": "text",
+        "placeholder": "author",
+        "fontSize": 24,
+        "x": 100,
+        "y": 300
+      }
+    ]
+  },
+  {
+    "id": "festivals_1",
+    "category": "festivals",
+    "background": "/static/templates/festivals/dashain.png",
+    "elements": [
+      {
+        "type": "text",
+        "value": "Happy Dashain",
+        "fontSize": 48,
+        "x": 200,
+        "y": 100
+      }
+    ]
+  },
+  {
+    "id": "youtube_1",
+    "category": "youtube",
+    "background": "/static/templates/youtube/bg1.png",
+    "elements": [
+      {
+        "type": "text",
+        "placeholder": "title",
+        "fontSize": 36,
+        "x": 50,
+        "y": 400
+      }
+    ]
+  },
+  {
+    "id": "news_1",
+    "category": "news",
+    "background": "/static/templates/news/bg1.png",
+    "elements": [
+      {
+        "type": "text",
+        "placeholder": "headline",
+        "fontSize": 40,
+        "x": 50,
+        "y": 50
+      },
+      {
+        "type": "text",
+        "placeholder": "summary",
+        "fontSize": 24,
+        "x": 50,
+        "y": 120
+      }
+    ]
+  }
+]

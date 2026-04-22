@@ -37,6 +37,7 @@ INSTALLED_APPS = [
     "news",
     # "speech_whisper",
     "vehicles",
+    "template_generator",
 
 # --------------------------------
     'django.contrib.admin',
@@ -145,3 +146,10 @@ REST_FRAMEWORK = {
 
 DATA_UPLOAD_MAX_MEMORY_SIZE = 104857600  # 100 MB
 FILE_UPLOAD_MAX_MEMORY_SIZE = 104857600  # 100 MB
+
+CORS_ALLOWED_ORIGINS = [
+    "http://localhost:3000",
+    "http://localhost:8080",
+    "http://127.0.0.1:3000",
+#     "https://yournepal-frontend.vercel.app/",
+]

@@ -6,7 +6,7 @@ from .models import News
 class FlashNewsSerializer(serializers.ModelSerializer):
     class Meta:
         model = News
-        fields = ["id", "title", "image", "created_at"]
+        fields = ["id", "title", "summary", "image", "created_at"]
 
 
 class NewsListSerializer(serializers.ModelSerializer):
