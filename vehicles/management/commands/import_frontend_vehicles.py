@@ -78,7 +78,7 @@ class Command(BaseCommand):
                 defaults={
                     "name": item["brand"],
                     "category": category,
-                    "logo_url": brand_logos[category].get(item["brand"], ""),
+                    "logo_external_url": brand_logos[category].get(item["brand"], ""),
                     "is_active": True,
                 },
             )
@@ -123,7 +123,7 @@ class Command(BaseCommand):
                 [
                     VehicleImage(
                         vehicle=vehicle,
-                        image_url=image_url,
+                        image_external_url=image_url,
                         alt_text=item["model"],
                         sort_order=index,
                         is_primary=index == 0,

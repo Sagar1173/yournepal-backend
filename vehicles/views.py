@@ -26,6 +26,7 @@ class BrandListView(APIView):
         serializer = BrandMinimalSerializer(
             BrandQueryService.active_brand_values(category=category),
             many=True,
+            context={"request": request},
         )
         return Response(serializer.data)
 
@@ -45,7 +46,8 @@ class VehicleCatalogView(APIView):
                 "vehicles": vehicles,
                 "brands": brands,
                 "bodyTypes": body_types,
-            }
+            },
+            context={"request": request},
         )
         return Response(serializer.data)
 
@@ -122,6 +124,9 @@ class VehicleInquiryViewSet(
             "full_name",
             "email",
             "phone",
+            "city",
+            "dealer_location",
+            "preferred_date",
             "status",
             "created_at",
             "vehicle__id",

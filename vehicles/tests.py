@@ -53,7 +53,7 @@ class VehicleApiTests(APITestCase):
         )
         VehicleImage.objects.create(
             vehicle=self.vehicle,
-            image_url="https://example.com/shine-primary.jpg",
+            image_external_url="https://example.com/shine-primary.jpg",
             alt_text="Front view",
             sort_order=0,
             is_primary=True,
@@ -108,7 +108,7 @@ class VehicleApiTests(APITestCase):
             "description": "Compact SUV",
             "images": [
                 {
-                    "image_url": "https://example.com/creta.jpg",
+                    "image_external_url": "https://example.com/creta.jpg",
                     "alt_text": "Creta",
                     "sort_order": 0,
                     "is_primary": True,
@@ -146,6 +146,9 @@ class VehicleApiTests(APITestCase):
                 "full_name": "Alice",
                 "email": "alice@example.com",
                 "phone": "9800000000",
+                "city": "Kathmandu",
+                "dealer_location": "Naxal, Kathmandu",
+                "preferred_date": "2026-04-25",
                 "message": "Need a test ride",
             },
             format="json",

@@ -1,3 +1,4 @@
+from django.conf import settings
 from rest_framework import serializers
 
 from .models import (
@@ -14,22 +15,42 @@ from .models import (
 from .services import VehicleInquiryService, VehicleWriteService
 
 
-class BrandMinimalSerializer(serializers.Serializer):
-    id = serializers.IntegerField()
-    name = serializers.CharField()
-    slug = serializers.CharField()
-    category = serializers.CharField()
-    logo_url = serializers.URLField(allow_blank=True, required=False)
+class AbsoluteMediaUrlMixin:
+    def build_absolute_media_url(self, url):
+        if not url:
+            return ""
+        if not str(url).startswith(("http://", "https://", "/")):
+            url = f"{settings.MEDIA_URL}{url}"
+        request = self.context.get("request")
+        if request:
+            return request.build_absolute_uri(url)
+        return url
 
 
-class VehicleImageSerializer(serializers.ModelSerializer):
+class BrandMinimalSerializer(AbsoluteMediaUrlMixin, serializers.ModelSerializer):
+    logo = serializers.SerializerMethodField()
+
+    class Meta:
+        model = Brand
+        fields = ["id", "name", "slug", "category", "logo"]
+
+    def get_logo(self, obj):
+        return self.build_absolute_media_url(obj.resolved_logo_url)
+
+
+class VehicleImageSerializer(AbsoluteMediaUrlMixin, serializers.ModelSerializer):
+    image = serializers.SerializerMethodField()
+
     class Meta:
         model = VehicleImage
-        fields = ["id", "image_url", "alt_text", "sort_order", "is_primary"]
+        fields = ["id", "image", "alt_text", "sort_order", "is_primary"]
         read_only_fields = ["id"]
 
+    def get_image(self, obj):
+        return self.build_absolute_media_url(obj.resolved_image_url)
 
-class VehicleListSerializer(serializers.Serializer):
+
+class VehicleListSerializer(AbsoluteMediaUrlMixin, serializers.Serializer):
     id = serializers.IntegerField()
     brand = BrandMinimalSerializer(read_only=True)
     category = serializers.ChoiceField(choices=VehicleCategory.choices)
@@ -43,9 +64,14 @@ class VehicleListSerializer(serializers.Serializer):
     year = serializers.IntegerField()
     seating_capacity = serializers.IntegerField(allow_null=True)
     is_featured = serializers.BooleanField()
-    primary_image_url = serializers.URLField(allow_null=True)
+    primary_image = serializers.SerializerMethodField()
     inquiry_count = serializers.IntegerField()
     created_at = serializers.DateTimeField()
+
+    def get_primary_image(self, obj):
+        image_path = getattr(obj, "primary_image_path", "")
+        image_external_url = getattr(obj, "primary_image_external_url", "")
+        return self.build_absolute_media_url(image_path or image_external_url or "")
 
 
 class VehicleDetailSerializer(VehicleListSerializer):
@@ -63,10 +89,16 @@ class VehicleDetailSerializer(VehicleListSerializer):
 
 
 class VehicleImageWriteSerializer(serializers.Serializer):
-    image_url = serializers.URLField(max_length=500)
+    image = serializers.ImageField(required=False)
+    image_external_url = serializers.URLField(max_length=500, required=False, allow_blank=True)
     alt_text = serializers.CharField(max_length=150, allow_blank=True, required=False)
     sort_order = serializers.IntegerField(min_value=0, required=False, default=0)
     is_primary = serializers.BooleanField(required=False, default=False)
+
+    def validate(self, attrs):
+        if not attrs.get("image") and not attrs.get("image_external_url"):
+            raise serializers.ValidationError("Provide either an uploaded image or an external image URL.")
+        return attrs
 
 
 class VehicleWriteSerializer(serializers.ModelSerializer):
@@ -135,7 +167,17 @@ class VehicleSummarySerializer(serializers.Serializer):
 class VehicleInquiryCreateSerializer(serializers.ModelSerializer):
     class Meta:
         model = VehicleInquiry
-        fields = ["id", "vehicle", "full_name", "email", "phone", "message"]
+        fields = [
+            "id",
+            "vehicle",
+            "full_name",
+            "email",
+            "phone",
+            "city",
+            "dealer_location",
+            "preferred_date",
+            "message",
+        ]
         read_only_fields = ["id"]
 
     def create(self, validated_data):
@@ -145,13 +187,23 @@ class VehicleInquiryCreateSerializer(serializers.ModelSerializer):
 class VehicleInquiryListSerializer(serializers.ModelSerializer):
     class Meta:
         model = VehicleInquiry
-        fields = ["id", "vehicle", "full_name", "email", "phone", "status", "created_at"]
+        fields = [
+            "id",
+            "vehicle",
+            "full_name",
+            "email",
+            "phone",
+            "city",
+            "dealer_location",
+            "preferred_date",
+            "status",
+            "created_at",
+        ]
 
 
-class BrandSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Brand
-        fields = ["id", "name", "slug", "category", "logo_url"]
+class BrandSerializer(BrandMinimalSerializer):
+    class Meta(BrandMinimalSerializer.Meta):
+        fields = ["id", "name", "slug", "category", "logo"]
 
 
 class InquiryStatusSerializer(serializers.ModelSerializer):
@@ -160,12 +212,19 @@ class InquiryStatusSerializer(serializers.ModelSerializer):
         fields = ["status"]
 
 
-class CatalogBrandSerializer(serializers.Serializer):
-    name = serializers.CharField()
-    logo = serializers.CharField(source="logo_url", allow_blank=True)
+class CatalogBrandSerializer(AbsoluteMediaUrlMixin, serializers.ModelSerializer):
+    logo = serializers.SerializerMethodField()
+
+    class Meta:
+        model = Brand
+        fields = ["name", "logo"]
+
+    def get_logo(self, obj):
+        return self.build_absolute_media_url(obj.resolved_logo_url)
 
 
 class CatalogVehicleSerializer(serializers.Serializer):
+    databaseId = serializers.IntegerField(source="pk")
     id = serializers.CharField(source="slug")
     type = serializers.SerializerMethodField()
     brand = serializers.CharField(source="brand.name")
@@ -200,7 +259,14 @@ class CatalogVehicleSerializer(serializers.Serializer):
         images = getattr(obj, "_prefetched_objects_cache", {}).get("images")
         if images is None:
             images = obj.images.all()
-        return [image.image_url for image in images]
+        request = self.context.get("request")
+        resolved = []
+        for image in images:
+            image_url = image.resolved_image_url
+            if request and image_url:
+                image_url = request.build_absolute_uri(image_url)
+            resolved.append(image_url)
+        return resolved
 
     def get_displacement(self, obj):
         return obj.engine_cc

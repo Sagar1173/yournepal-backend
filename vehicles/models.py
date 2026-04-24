@@ -39,7 +39,8 @@ class InquiryStatus(models.TextChoices):
 class Brand(models.Model):
     name = models.CharField(max_length=100, unique=True)
     slug = models.SlugField(max_length=120, unique=True)
-    logo_url = models.URLField(max_length=500, blank=True)
+    logo = models.ImageField(upload_to="vehicles/brands/", blank=True)
+    logo_external_url = models.URLField(max_length=500, blank=True)
     category = models.CharField(
         max_length=20,
         choices=VehicleCategory.choices,
@@ -63,6 +64,12 @@ class Brand(models.Model):
 
     def __str__(self):
         return self.name
+
+    @property
+    def resolved_logo_url(self):
+        if self.logo:
+            return self.logo.url
+        return self.logo_external_url
 
 
 class Vehicle(models.Model):
@@ -188,7 +195,8 @@ class VehicleImage(models.Model):
         related_name="images",
         db_index=True,
     )
-    image_url = models.URLField(max_length=500)
+    image = models.ImageField(upload_to="vehicles/images/", blank=True)
+    image_external_url = models.URLField(max_length=500, blank=True)
     alt_text = models.CharField(max_length=150, blank=True)
     sort_order = models.PositiveSmallIntegerField(default=0, db_index=True)
     is_primary = models.BooleanField(default=False, db_index=True)
@@ -213,6 +221,12 @@ class VehicleImage(models.Model):
     def __str__(self):
         return f"Image {self.id} for {self.vehicle_id}"
 
+    @property
+    def resolved_image_url(self):
+        if self.image:
+            return self.image.url
+        return self.image_external_url
+
 
 class VehicleInquiry(models.Model):
     vehicle = models.ForeignKey(
@@ -224,6 +238,9 @@ class VehicleInquiry(models.Model):
     full_name = models.CharField(max_length=120)
     email = models.EmailField(db_index=True)
     phone = models.CharField(max_length=25, blank=True, db_index=True)
+    city = models.CharField(max_length=100, blank=True, db_index=True)
+    dealer_location = models.CharField(max_length=150, blank=True, db_index=True)
+    preferred_date = models.DateField(null=True, blank=True, db_index=True)
     status = models.CharField(
         max_length=20,
         choices=InquiryStatus.choices,
@@ -244,6 +261,7 @@ class VehicleInquiry(models.Model):
         indexes = [
             models.Index(fields=["vehicle", "status", "-created_at"]),
             models.Index(fields=["email", "status", "-created_at"]),
+            models.Index(fields=["dealer_location", "status", "-created_at"]),
             models.Index(fields=["status", "-created_at"]),
         ]
 

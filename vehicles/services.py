@@ -10,6 +10,9 @@ class VehicleQueryService:
         "brand__id",
         "brand__name",
         "brand__slug",
+        "brand__category",
+        "brand__logo",
+        "brand__logo_external_url",
         "category",
         "status",
         "fuel_type",
@@ -50,15 +53,20 @@ class VehicleQueryService:
 
     @classmethod
     def base_queryset(cls):
-        primary_image_subquery = VehicleImage.objects.filter(
+        primary_image_path_subquery = VehicleImage.objects.filter(
             vehicle_id=OuterRef("pk"),
             is_primary=True,
-        ).values("image_url")[:1]
+        ).values("image")[:1]
+        primary_image_external_url_subquery = VehicleImage.objects.filter(
+            vehicle_id=OuterRef("pk"),
+            is_primary=True,
+        ).values("image_external_url")[:1]
 
         return (
             Vehicle.objects.select_related("brand")
             .annotate(
-                primary_image_url=Subquery(primary_image_subquery),
+                primary_image_path=Subquery(primary_image_path_subquery),
+                primary_image_external_url=Subquery(primary_image_external_url_subquery),
                 inquiry_count=Count("inquiries", distinct=True),
             )
         )
@@ -74,7 +82,8 @@ class VehicleQueryService:
         image_queryset = VehicleImage.objects.only(
             "id",
             "vehicle_id",
-            "image_url",
+            "image",
+            "image_external_url",
             "alt_text",
             "sort_order",
             "is_primary",
@@ -170,7 +179,18 @@ class VehicleInquiryService:
     def recent_inquiries(vehicle_id, limit=20):
         return (
             VehicleInquiry.objects.filter(vehicle_id=vehicle_id)
-            .only("id", "vehicle_id", "full_name", "email", "phone", "status", "created_at")
+            .only(
+                "id",
+                "vehicle_id",
+                "full_name",
+                "email",
+                "phone",
+                "city",
+                "dealer_location",
+                "preferred_date",
+                "status",
+                "created_at",
+            )
             .order_by("-created_at", "-id")[:limit]
         )
 
@@ -181,7 +201,7 @@ class BrandQueryService:
         queryset = Brand.objects.filter(is_active=True)
         if category:
             queryset = queryset.filter(category=category)
-        return queryset.values("id", "name", "slug", "category", "logo_url").order_by("name")
+        return queryset.order_by("name")
 
 
 class VehicleCatalogService:
@@ -205,7 +225,8 @@ class VehicleCatalogService:
         image_queryset = VehicleImage.objects.only(
             "id",
             "vehicle_id",
-            "image_url",
+            "image",
+            "image_external_url",
             "sort_order",
             "is_primary",
         ).order_by("sort_order", "id")
@@ -216,7 +237,8 @@ class VehicleCatalogService:
                 "id",
                 "brand_id",
                 "brand__name",
-                "brand__logo_url",
+                "brand__logo",
+                "brand__logo_external_url",
                 "category",
                 "name",
                 "slug",
@@ -249,4 +271,4 @@ class VehicleCatalogService:
         return Brand.objects.filter(
             category=cls.get_category_value(category_slug),
             is_active=True,
-        ).values("name", "logo_url").order_by("name")
+        ).order_by("name")
