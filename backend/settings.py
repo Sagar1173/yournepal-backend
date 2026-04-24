@@ -37,8 +37,8 @@ INSTALLED_APPS = [
     "news",
     # "speech_whisper",
     "vehicles",
+    "feedback",
     "template_generator",
-    
 
 # --------------------------------
     'django.contrib.admin',

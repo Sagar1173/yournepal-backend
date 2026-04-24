@@ -4,8 +4,9 @@ from rest_framework.exceptions import NotFound
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
-from .models import Vehicle, VehicleInquiry
+from .models import AuthorizedDealer, Vehicle, VehicleInquiry
 from .serializers import (
+    AuthorizedDealerSerializer,
     BrandMinimalSerializer,
     CatalogResponseSerializer,
     InquiryStatusSerializer,
@@ -17,7 +18,7 @@ from .serializers import (
     VehicleSummarySerializer,
     VehicleWriteSerializer,
 )
-from .services import BrandQueryService, VehicleCatalogService, VehicleQueryService
+from .services import AuthorizedDealerQueryService, BrandQueryService, VehicleCatalogService, VehicleQueryService
 
 
 class BrandListView(APIView):
@@ -158,3 +159,11 @@ class VehicleInquiryViewSet(
         serializer.is_valid(raise_exception=True)
         serializer.save()
         return Response({"id": inquiry.id, "status": serializer.instance.status})
+
+
+class AuthorizedDealerViewSet(mixins.ListModelMixin, viewsets.GenericViewSet):
+    serializer_class = AuthorizedDealerSerializer
+    queryset = AuthorizedDealer.objects.none()
+
+    def get_queryset(self):
+        return AuthorizedDealerQueryService.list_queryset(self.request.query_params)

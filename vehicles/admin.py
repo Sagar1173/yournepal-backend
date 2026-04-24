@@ -1,13 +1,13 @@
 from django.contrib import admin
 from django.utils.html import format_html
 
-from .models import Brand, Vehicle, VehicleImage, VehicleInquiry
+from .models import AuthorizedDealer, Brand, Vehicle, VehicleImage, VehicleInquiry
 
 
 class VehicleImageInline(admin.TabularInline):
     model = VehicleImage
     extra = 0
-    fields = ("preview", "image", "image_external_url", "alt_text", "sort_order", "is_primary")
+    fields = ("preview", "image", "image_external_url", "alt_text", "color", "sort_order", "is_primary")
     readonly_fields = ("preview",)
 
     @admin.display(description="Preview")
@@ -132,5 +132,19 @@ class VehicleInquiryAdmin(admin.ModelAdmin):
     fieldsets = (
         ("Contact", {"fields": ("vehicle", "full_name", "email", "phone", "city")}),
         ("Visit Details", {"fields": ("dealer_location", "preferred_date", "message", "status")}),
+        ("Metadata", {"fields": ("created_at",)}),
+    )
+
+
+@admin.register(AuthorizedDealer)
+class AuthorizedDealerAdmin(admin.ModelAdmin):
+    list_display = ("dealer_name", "brand", "city", "phone", "created_at")
+    list_filter = ("brand", "city", "created_at")
+    search_fields = ("dealer_name", "address", "city", "phone", "brand__name")
+    ordering = ("dealer_name", "id")
+    readonly_fields = ("created_at",)
+    fieldsets = (
+        ("Dealer", {"fields": ("dealer_name", "brand", "phone")}),
+        ("Location", {"fields": ("city", "address")}),
         ("Metadata", {"fields": ("created_at",)}),
     )

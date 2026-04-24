@@ -34,6 +34,20 @@ def infer_transmission(item):
     return TransmissionType.MANUAL
 
 
+def infer_image_color(item, index, total_images):
+    colors = item.get("availableColors", [])
+    if not colors:
+        return ""
+    if len(colors) == 1:
+        return colors[0]
+    if len(colors) == total_images:
+        return colors[index]
+    if total_images % len(colors) == 0:
+        chunk_size = total_images // len(colors)
+        return colors[min(index // chunk_size, len(colors) - 1)]
+    return ""
+
+
 def run_node_export():
     node_script = f"""
 import fs from "node:fs/promises";
@@ -125,6 +139,7 @@ class Command(BaseCommand):
                         vehicle=vehicle,
                         image_external_url=image_url,
                         alt_text=item["model"],
+                        color=infer_image_color(item, index, len(item.get("images", []))),
                         sort_order=index,
                         is_primary=index == 0,
                     )

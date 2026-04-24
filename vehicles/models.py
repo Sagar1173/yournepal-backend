@@ -198,6 +198,7 @@ class VehicleImage(models.Model):
     image = models.ImageField(upload_to="vehicles/images/", blank=True)
     image_external_url = models.URLField(max_length=500, blank=True)
     alt_text = models.CharField(max_length=150, blank=True)
+    color = models.CharField(max_length=32, blank=True, db_index=True)
     sort_order = models.PositiveSmallIntegerField(default=0, db_index=True)
     is_primary = models.BooleanField(default=False, db_index=True)
 
@@ -216,6 +217,7 @@ class VehicleImage(models.Model):
         ]
         indexes = [
             models.Index(fields=["vehicle", "is_primary", "sort_order"]),
+            models.Index(fields=["vehicle", "color", "sort_order"]),
         ]
 
     def __str__(self):
@@ -267,3 +269,28 @@ class VehicleInquiry(models.Model):
 
     def __str__(self):
         return f"{self.full_name} -> {self.vehicle_id}"
+
+
+class AuthorizedDealer(models.Model):
+    dealer_name = models.CharField(max_length=150, db_index=True)
+    address = models.CharField(max_length=255)
+    phone = models.CharField(max_length=25)
+    city = models.CharField(max_length=100, db_index=True)
+    brand = models.ForeignKey(
+        Brand,
+        on_delete=models.CASCADE,
+        related_name="authorized_dealers",
+        db_index=True,
+    )
+    created_at = models.DateTimeField(auto_now_add=True, db_index=True)
+
+    class Meta:
+        ordering = ["dealer_name", "id"]
+        indexes = [
+            models.Index(fields=["brand", "city"]),
+            models.Index(fields=["brand", "-created_at"]),
+            models.Index(fields=["city", "dealer_name"]),
+        ]
+
+    def __str__(self):
+        return f"{self.dealer_name} ({self.brand.name})"

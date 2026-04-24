@@ -1,6 +1,6 @@
 from django.db.models import Count, OuterRef, Prefetch, Subquery
 
-from .models import Brand, Vehicle, VehicleImage, VehicleInquiry, VehicleStatus
+from .models import AuthorizedDealer, Brand, Vehicle, VehicleImage, VehicleInquiry, VehicleStatus
 
 
 class VehicleQueryService:
@@ -272,3 +272,37 @@ class VehicleCatalogService:
             category=cls.get_category_value(category_slug),
             is_active=True,
         ).order_by("name")
+
+
+class AuthorizedDealerQueryService:
+    @staticmethod
+    def list_queryset(params):
+        queryset = AuthorizedDealer.objects.select_related("brand").only(
+            "id",
+            "dealer_name",
+            "address",
+            "phone",
+            "city",
+            "brand_id",
+            "brand__id",
+            "brand__name",
+            "brand__slug",
+            "brand__category",
+            "brand__logo",
+            "brand__logo_external_url",
+            "created_at",
+        )
+
+        brand = params.get("brand")
+        city = params.get("city")
+
+        if brand:
+            if str(brand).isdigit():
+                queryset = queryset.filter(brand_id=brand)
+            else:
+                queryset = queryset.filter(brand__slug=brand)
+
+        if city:
+            queryset = queryset.filter(city__iexact=city)
+
+        return queryset.order_by("dealer_name", "id")

@@ -2,6 +2,7 @@ from django.conf import settings
 from rest_framework import serializers
 
 from .models import (
+    AuthorizedDealer,
     Brand,
     FuelType,
     InquiryStatus,
@@ -43,7 +44,7 @@ class VehicleImageSerializer(AbsoluteMediaUrlMixin, serializers.ModelSerializer)
 
     class Meta:
         model = VehicleImage
-        fields = ["id", "image", "alt_text", "sort_order", "is_primary"]
+        fields = ["id", "image", "alt_text", "color", "sort_order", "is_primary"]
         read_only_fields = ["id"]
 
     def get_image(self, obj):
@@ -92,6 +93,7 @@ class VehicleImageWriteSerializer(serializers.Serializer):
     image = serializers.ImageField(required=False)
     image_external_url = serializers.URLField(max_length=500, required=False, allow_blank=True)
     alt_text = serializers.CharField(max_length=150, allow_blank=True, required=False)
+    color = serializers.CharField(max_length=32, allow_blank=True, required=False)
     sort_order = serializers.IntegerField(min_value=0, required=False, default=0)
     is_primary = serializers.BooleanField(required=False, default=False)
 
@@ -228,6 +230,7 @@ class CatalogVehicleSerializer(serializers.Serializer):
     id = serializers.CharField(source="slug")
     type = serializers.SerializerMethodField()
     brand = serializers.CharField(source="brand.name")
+    brandSlug = serializers.CharField(source="brand.slug")
     model = serializers.CharField(source="name")
     price = serializers.DecimalField(max_digits=12, decimal_places=2)
     isPopular = serializers.BooleanField(source="is_popular")
@@ -235,6 +238,7 @@ class CatalogVehicleSerializer(serializers.Serializer):
     isUpcoming = serializers.BooleanField(source="is_upcoming")
     isEV = serializers.BooleanField(source="is_ev")
     images = serializers.SerializerMethodField()
+    imageVariants = serializers.SerializerMethodField()
     availableColors = serializers.ListField(source="available_colors", child=serializers.CharField(), allow_empty=True)
     description = serializers.CharField()
     bodyType = serializers.CharField(source="body_type")
@@ -268,6 +272,28 @@ class CatalogVehicleSerializer(serializers.Serializer):
             resolved.append(image_url)
         return resolved
 
+    def get_imageVariants(self, obj):
+        images = getattr(obj, "_prefetched_objects_cache", {}).get("images")
+        if images is None:
+            images = obj.images.all()
+        request = self.context.get("request")
+        resolved = []
+        for image in images:
+            image_url = image.resolved_image_url
+            if request and image_url:
+                image_url = request.build_absolute_uri(image_url)
+            resolved.append(
+                {
+                    "id": image.id,
+                    "image": image_url,
+                    "altText": image.alt_text,
+                    "color": image.color,
+                    "sortOrder": image.sort_order,
+                    "isPrimary": image.is_primary,
+                }
+            )
+        return resolved
+
     def get_displacement(self, obj):
         return obj.engine_cc
 
@@ -287,3 +313,11 @@ class CatalogResponseSerializer(serializers.Serializer):
     vehicles = CatalogVehicleSerializer(many=True)
     brands = CatalogBrandSerializer(many=True)
     bodyTypes = serializers.ListField(child=serializers.CharField())
+
+
+class AuthorizedDealerSerializer(serializers.ModelSerializer):
+    brand = BrandMinimalSerializer(read_only=True)
+
+    class Meta:
+        model = AuthorizedDealer
+        fields = ["id", "dealer_name", "address", "phone", "city", "brand", "created_at"]

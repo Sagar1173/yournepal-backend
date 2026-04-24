@@ -1,9 +1,10 @@
 from django.urls import path
 
-from .views import BrandListView, VehicleCatalogView, VehicleInquiryViewSet, VehicleViewSet
+from .views import AuthorizedDealerViewSet, BrandListView, VehicleCatalogView, VehicleInquiryViewSet, VehicleViewSet
 
 urlpatterns = [
     path("brands/", BrandListView.as_view(), name="vehicle-brand-list"),
+    path("dealers/", AuthorizedDealerViewSet.as_view({"get": "list"}), name="authorized-dealer-list"),
     path("catalog/<slug:category>/", VehicleCatalogView.as_view(), name="vehicle-catalog"),
     path("", VehicleViewSet.as_view({"get": "list", "post": "create"}), name="vehicle-list"),
     path("summary/", VehicleViewSet.as_view({"get": "summary"}), name="vehicle-summary"),
